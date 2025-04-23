@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
-import os
+from quicksight_service import get_quicksight_embed_url  # Importar la función desde quicksight_service
 
 # Configuración de Flask
 app = Flask(__name__)
@@ -58,6 +58,25 @@ def login():
         return jsonify({'message': 'Invalid credentials'}), 401
 
     return jsonify({'message': 'Login successful', 'user': user.username})
+
+# Ruta para generar la URL de incrustación de QuickSight
+@app.route('/get-report-url', methods=['POST'])
+def get_report_url():
+    data = request.get_json()
+    username = data.get('username')
+    report_name = data.get('reportName')
+
+    # Validar los parámetros
+    if not username or not report_name:
+        return jsonify({'error': 'Missing parameters'}), 400
+
+    # Llamar a la función del servicio de QuickSight para obtener la URL
+    embed_url = get_quicksight_embed_url(username, report_name)
+
+    if embed_url:
+        return jsonify({'embedUrl': embed_url})
+    else:
+        return jsonify({'error': 'Error al generar la URL de incrustación'}), 500
 
 if __name__ == '__main__':
     # Crear las tablas en la base de datos dentro del contexto de la aplicación
